@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import base64
 from io import BytesIO
 from PIL import Image
 import json
@@ -89,28 +88,18 @@ if uploaded_file is not None:
         if st.button("🚀 Bild verarbeiten", type="primary", use_container_width=True):
             with st.spinner("Bild wird verarbeitet..."):
                 try:
-                    # Bild in Base64 konvertieren
+                    # Datei zurücksetzen und als multipart/form-data senden
                     uploaded_file.seek(0)
-                    image_bytes = uploaded_file.read()
-                    base64_image = base64.b64encode(image_bytes).decode('utf-8')
                     
-                    # Payload vorbereiten
-                    payload = {
-                        "image": base64_image,
-                        "filename": uploaded_file.name,
-                        "mime_type": uploaded_file.type
+                    # Files dict für multipart upload
+                    files = {
+                        'file': (uploaded_file.name, uploaded_file, uploaded_file.type)
                     }
                     
-                    # Headers vorbereiten
-                    headers = {
-                        "Content-Type": "application/json"
-                    }
-                    
-                    # POST-Request an Webhook
+                    # POST-Request an Webhook mit file upload
                     response = requests.post(
                         webhook_url,
-                        json=payload,
-                        headers=headers,
+                        files=files,
                         timeout=30
                     )
                     
@@ -208,12 +197,11 @@ with st.expander("ℹ️ Anleitung & Hilfe"):
     - JPEG (.jpg, .jpeg)
     
     ### Konfiguration:
-    Die Webhook-URL und optionale API-Keys werden über Streamlit Secrets verwaltet.
+    Die Webhook-URL wird über Streamlit Secrets verwaltet.
     
     **Benötigte Secrets:**
     ```toml
-    WEBHOOK_URL = "https://ihre-webhook-url.com/endpoint"
-    API_KEY = "ihr-optionaler-api-key"  # Optional
+    WEBHOOK_URL = "https://ihre-n8n-webhook-url.com/webhook/xyz"
     ```
     """)
 
@@ -221,5 +209,4 @@ with st.expander("ℹ️ Anleitung & Hilfe"):
 if st.secrets.get("DEBUG_MODE", False):
     with st.expander("🔧 Debug-Informationen"):
         st.write("Webhook URL:", webhook_url[:30] + "..." if len(webhook_url) > 30 else webhook_url)
-        st.write("API Key konfiguriert:", bool(api_key))
         st.write("Session State:", st.session_state)

@@ -106,7 +106,15 @@ if uploaded_file is not None:
                     # Erfolgreiche Antwort verarbeiten
                     if response.status_code == 200:
                         st.success("✅ Bild erfolgreich verarbeitet!")
-                        st.session_state.processing_result = response.json()
+                        try:
+                            result = response.json()
+                            # Wenn die Antwort ein Array ist, nehme das erste Element
+                            if isinstance(result, list) and len(result) > 0:
+                                result = result[0]
+                            st.session_state.processing_result = result
+                        except json.JSONDecodeError:
+                            # Falls JSON-Parsing fehlschlägt, speichere als Text
+                            st.session_state.processing_result = {"text": response.text}
                     else:
                         st.error(f"❌ Fehler bei der Verarbeitung (Status {response.status_code}): {response.text}")
                         
